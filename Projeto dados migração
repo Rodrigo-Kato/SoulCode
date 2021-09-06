@@ -1,0 +1,49 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from IPython.display import display
+
+def get_database():
+    from pymongo import MongoClient
+    import pymongo
+    
+    #URL de conexão
+    CONNECTION_STRING = "mongodb+srv://jemimafpassos:041092@cluster0.owswo.mongodb.net/myFirstDatabase"
+    
+    from pymongo import MongoClient
+    client = MongoClient(CONNECTION_STRING)#Conexão com o cliente
+
+    return client['soulcodeTeste2']#Base de dados
+
+def pesquisaRodrigo():
+    dbname = get_database()
+    collection_name = dbname["migration"]
+    detalhes_itens = collection_name.find({'iso3c': 'TSA'}, {'country': 1, 'year': 1, 'population': 1, 'net_migration': 1, "_id": 0, 'migration_perc':1}) #Aqui pode ser qualquer consulta
+    df = pd.DataFrame(list(detalhes_itens))
+    df = df.fillna(0)
+    df = df[df['net_migration']!=0]
+    df = df.replace({"country": {'South Asia (IDA & IBRD)': 'South Asia'}})
+    df2 =(df[(df['year'] > '1960') & (df['year'] < '2018')])
+    df2 = df2.sort_values('year')
+    print(df2)
+
+    anoV2=[]
+    migracaoV2=[]
+    for num in df2['year']:
+        x = int(num)
+        anoV2.append(x) 
+
+    for item in df2['net_migration']:
+        x = (float(item))
+        migracaoV2.append(x*(-1))
+    migracaoV2=pd.Series(migracaoV2)
+    print(migracaoV2.describe())
+    print(anoV2)
+    plt.figure(figsize=(10, 8))
+    plt.plot(anoV2,migracaoV2,'-o')
+    plt.title('Quantidade de pessoas que imigraram do Sul da Ásia (1960-2018)')
+    plt.ylabel("Números de pessoas que imigraram do Sul da Ásia") 
+    plt.xlabel("Anos")  
+    plt.show()
+
+pesquisaRodrigo()
